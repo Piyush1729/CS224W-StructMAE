@@ -1,0 +1,119 @@
+\documentclass{article}
+\usepackage[preprint,nonatbib]{neurips_2022}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,booktabs}
+\usepackage[colorlinks=true,urlcolor=blue,citecolor=blue,linkcolor=blue]{hyperref}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,columns=fullflexible,frame=single}
+\makeatletter
+\renewcommand{\@noticestring}{Stanford CS224W, Fall 2026. Project 3 milestone. Independent implementation.}
+\makeatother
+\title{StructMAE in PyTorch Geometric: Project Milestone}
+\author{Piyush Gade\\Stanford University, CS224W\\Fall 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+I implemented the predefined PageRank variant of StructMAE using PyTorch and PyTorch Geometric (PyG). The milestone includes structural scoring, curriculum masking, a working masked-feature encoder-decoder, 26 passing CPU tests, and a three-seed MUTAG comparison. The curriculum selects structurally more important targets over time, but does not improve held-out reconstruction loss in this small experiment. Learned scoring, downstream classification, and full benchmark reproduction remain future work. I reproduced the tests and training in Google Colab using the public GitHub repository. The repository and executed session are linked below.
+\end{abstract}
+
+\section{Problem and method}
+Masked graph autoencoders learn representations by reconstructing hidden node features from graph context. GraphMAE uses feature corruption, a GNN decoder, and scaled cosine error (SCE)~\cite{graphmae}. Uniform random masking does not account for the different structural roles of nodes. StructMAE~\cite{structmae} introduces structure-based scoring (SBS) and structure-guided masking (SGM), gradually emphasizing structurally important nodes. This project implements the published method rather than proposing a new objective.
+
+For an unweighted undirected graph with $n$ nodes, predefined SBS uses PageRank:
+\begin{equation}
+s_i=\frac{1-d}{n}+d\sum_{j\in\mathcal N_i}\frac{s_j}{\deg(j)},\qquad d=0.85.
+\end{equation}
+Scores sum to one per input graph. Dangling-node mass is redistributed uniformly within that graph. The implementation symmetrizes edges, removes duplicates, and explicitly includes isolates. Separate graphs in a PyG Batch retain independent normalization; disconnected components within a single graph share that graph's teleportation distribution.
+
+The curriculum follows Eqs. 6--7 of StructMAE:
+\begin{equation}
+K(t)=pn\sqrt{t/T},\quad Y_t=\operatorname{TopK}(s,K(t)),\quad
+\gamma_i=\epsilon_i+\beta\mathbf{1}[i\in Y_t],\quad \epsilon_i\sim U(0,1).
+\end{equation}
+The final targets are the nodes with the highest $\gamma_i$. The additive bias is a priority offset, not a normalized probability or independent Bernoulli draw. The pool begins empty at $t=0$ and grows toward the highest-scoring nodes. Training uses epochs $1,\ldots,T$.
+
+\paragraph{Discrete conventions and reference inspection.}
+I inspected the authors' predefined implementation at commit \texttt{9f723ffc70a40c100e26af7e63d64d571dde43ce}, particularly \texttt{edcoder.py} and \texttt{main\_graph.py}~\cite{code}. The paper does not specify rounding. Following the graph branch, I use $\lceil pn\sqrt{t/T}\rceil$ pool nodes and $\lfloor pn\rfloor$ targets per graph. The latter is mathematically equivalent to retaining $\lceil(1-p)n\rceil$ low-priority nodes. Direct floor avoids complement-rounding artifacts. Epoch zero, empty graphs, and ratios zero/one receive explicit handling; these avoid boundary quirks in the reference top-k helper. Ties resolve by node index. PyTorch replaces NumPy random draws, so the distribution matches but samples are not bitwise identical to the authors' code.
+
+\clearpage
+\section{Implemented system and validation}
+The reusable package separates \texttt{structural\_scoring.py}, \texttt{curriculum\_masking.py}, and \texttt{model.py}. It accepts standard PyG tensors and optional Batch membership. PageRank is cached per graph for the MUTAG demonstration. The minimal reconstruction model uses a learned input mask token, a two-layer GCN encoder with PReLU, a bias-free hidden projection, zero re-masking of target latents, and a GCN decoder. Existing PyG \texttt{GCNConv} layers provide message passing. Only target features contribute to
+\begin{equation}
+\mathcal L=\frac{1}{|M|}\sum_{i\in M}\left(1-
+\frac{\hat x_i^\top x_i}{\|\hat x_i\|\|x_i\|}\right)^q,\quad q=1.
+\end{equation}
+PyTorch normalization supplies the numerical epsilon convention. An empty mask gives differentiable zero loss. The example exports finite unmasked embeddings of shape $17\times64$ for the first MUTAG graph.
+
+\begin{lstlisting}[language=Python]
+model = StructMAE(GCNEncoder(7, 64), GCNConv(64, 7),
+                  in_channels=7, hidden_channels=64)
+loss = model.pretraining_loss(x, edge_index, epoch=1,
+    total_epochs=30, batch=batch, scores=cached_pagerank)
+z = model.encode(x, edge_index)
+\end{lstlisting}
+This is a draft API, with configurable mask ratio, priority bias, random baseline, generator, and SCE exponent. It is not yet integrated into upstream PyG. Feature replacement, edge dropout, hidden concatenation, and learned SBS are omitted from this minimal configuration.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{p{0.24\linewidth}p{0.59\linewidth}r}
+\toprule
+Executed check & Evidence covered & Result\\\midrule
+Structural scoring & NetworkX reference, analytical star, isolates, duplicate/self-loop edges, batch normalization, errors & 9 passed\\
+Curriculum masking & Independent priority calculation, ordering, schedule, seed control, tiny graphs, ratios, batch budgets & 12 passed\\
+Reconstruction & Masked-only SCE, latent re-mask, shapes, all trainable gradients, optimizer update, cached scores & 5 passed\\\bottomrule
+\end{tabular}
+\caption{Actual CPU pytest results: 26 passed in 2.52 seconds.}
+\end{table}
+
+\section{Initial MUTAG experiment}
+MUTAG contains 188 graphs, 3,371 nodes, and seven node-feature channels. A fixed seed-42 split uses 150 training graphs and 38 held-out graphs. Graph labels and edge labels are unused. Both methods use hidden width 64, batch size 32, Adam with learning rate 0.001, mask ratio 0.5, $\beta=0.5$, and 30 epochs. I ran seeds 0, 1, and 2 on CPU with one Torch thread and deterministic algorithms. For each seed, initial model weights, shuffle order, optimizer, and budget match across methods.
+
+Validation uses identical fixed random masks (seed 2026) for both methods, without fitting or checkpoint selection on held-out data. This gives a common reconstruction task despite different training targets. SCE is averaged by number of masked nodes. Table~\ref{tab:results} reports actual results; training runtimes exclude download, PageRank preprocessing, validation, and diagnostic export.
+
+\clearpage
+\begin{table}[t]
+\centering\small
+\begin{tabular}{llrrr}
+\toprule
+Seed & Masking & Final train SCE & Held-out SCE & Train time (s)\\\midrule
+0 & Random & 0.1635 & 0.1804 & 0.73\\
+0 & Curriculum & 0.1508 & 0.2181 & 0.78\\
+1 & Random & 0.1814 & 0.1991 & 0.70\\
+1 & Curriculum & 0.1312 & 0.2180 & 0.83\\
+2 & Random & 0.1619 & 0.1825 & 0.70\\
+2 & Curriculum & 0.1322 & 0.2010 & 0.81\\
+\midrule
+Mean $\pm$ SD & Random & $0.1689\pm0.0109$ & $0.1874\pm0.0102$ & --\\
+Mean $\pm$ SD & Curriculum & $0.1380\pm0.0110$ & $0.2124\pm0.0099$ & --\\
+\bottomrule
+\end{tabular}
+\caption{Three-seed reconstruction comparison. Lower SCE is better. Sample standard deviation is across three seeds on one fixed split.}\label{tab:results}
+\end{table}
+
+\paragraph{Observed behavior and limits.}
+All six runs completed with finite losses. Curriculum masking moved the mean selected-node PageRank percentile from approximately 0.496 at epoch zero to 0.634 at the final epoch; the random distribution stayed at approximately 0.496. Each diagnostic selected 1,310 targets from the training set, with 1,393 nodes in the final biased pool because of per-graph rounding. The training losses cannot directly establish a benefit because their target distributions differ. On the common held-out task, random masking had lower loss on all three seeds. These runs demonstrate functioning training, not improved downstream representations. No SVM probe was executed.
+
+\paragraph{Reproducibility evidence.}
+The six local runs reproduced all 180 epoch losses and six held-out losses exactly on repetition. Local versions were Python 3.12.14, PyTorch 2.5.1+cpu and PyG 2.6.1. Final tests, curves, split indices and archive hash are retained in \texttt{evidence/}; setup and failed-attempt logs were removed. Original local source revision:
+\begin{center}\footnotesize\texttt{af1efbe60b796db5f9fb6ecd46fe588433a12504}\end{center}
+The public GitHub-to-Colab run used revision:
+\begin{center}\footnotesize\texttt{7a29a12375adf7622bb51ac687dfa56904456ae3}\end{center}
+My Colab run completed with \textbf{26 passed, one warning in 9.39 seconds}, and six completed MUTAG runs under Python 3.13.18, PyTorch 2.14.1+cpu and PyG 2.6.1. Losses agree with Table~\ref{tab:results} to four decimal places. The deprecation warning did not interrupt execution. The linked notebook records my Colab execution; the table retains original local runtimes.
+
+\section{Remaining work and contribution plan}
+PageRank/SGM and minimal reconstruction are complete for the tested CPU scope. Remaining work includes learned SBS, PROTEINS, downstream SVM evaluation, full reference settings and scalability checks. Next steps are API validation in a PyG fork, contributor checks, a PR and technical blog. Feature issue \href{https://github.com/pyg-team/pytorch_geometric/issues/10874}{\#10874} had no comments at inspection; acceptance is not assumed.
+
+\noindent\textbf{Project links.}\\
+GitHub: \url{https://github.com/Piyush1729/CS224W-StructMAE}\\
+Colab: \href{https://colab.research.google.com/drive/1JA-mS6bwwKbfHbgyCNB4O1AE9OI_sVV2?usp=sharing}{Open the project execution notebook}.\\
+My implementation and executed Colab session are linked above.
+
+\begin{thebibliography}{3}\footnotesize
+\bibitem{structmae} C. Liu, Y. Wang, Y. Zhan, X. Ma, D. Tao, J. Wu, and W. Hu.
+Where to Mask: Structure-Guided Masking for Graph Masked Autoencoders.
+IJCAI, 2024, pp. 2181--2189. \url{https://www.ijcai.org/proceedings/2024/241}.
+\bibitem{graphmae} Z. Hou et al. GraphMAE: Self-Supervised Masked Graph Autoencoders. KDD, 2022. \url{https://arxiv.org/abs/2205.10803}.
+\bibitem{code} StructMAE authors. Official reference implementation.
+\url{https://github.com/LiuChuang0059/StructMAE}.
+\end{thebibliography}
+\end{document}

@@ -1,0 +1,35 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-8.3.5, pluggy-1.7.0 -- /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python
+cachedir: .pytest_cache
+rootdir: /workspace/scratch/68d83b5fae97/CS224W_StructMAE_Milestone
+plugins: anyio-4.14.2
+collecting ... collected 26 items
+
+tests/test_curriculum_masking.py::test_equations_against_independent_reference_selection PASSED [  3%]
+tests/test_curriculum_masking.py::test_progression_and_high_score_direction PASSED [  7%]
+tests/test_curriculum_masking.py::test_fixed_seed_and_epoch_zero_random_equivalence PASSED [ 11%]
+tests/test_curriculum_masking.py::test_edge_counts[0-0.5] PASSED         [ 15%]
+tests/test_curriculum_masking.py::test_edge_counts[1-0.5] PASSED         [ 19%]
+tests/test_curriculum_masking.py::test_edge_counts[3-0.5] PASSED         [ 23%]
+tests/test_curriculum_masking.py::test_edge_counts[5-0] PASSED           [ 26%]
+tests/test_curriculum_masking.py::test_edge_counts[5-1] PASSED           [ 30%]
+tests/test_curriculum_masking.py::test_edge_counts[10-0.7] PASSED        [ 34%]
+tests/test_curriculum_masking.py::test_edge_counts[10-0.3] PASSED        [ 38%]
+tests/test_curriculum_masking.py::test_pyg_batch_has_independent_budgets PASSED [ 42%]
+tests/test_curriculum_masking.py::test_invalid_inputs PASSED             [ 46%]
+tests/test_model.py::test_shapes_gradients_and_optimization PASSED       [ 50%]
+tests/test_model.py::test_batch_and_cached_score_equivalence PASSED      [ 53%]
+tests/test_model.py::test_empty_masks_safe_backward[0] PASSED            [ 57%]
+tests/test_model.py::test_empty_masks_safe_backward[1] PASSED            [ 61%]
+tests/test_model.py::test_loss_is_masked_only_and_decoder_latents_remasked PASSED [ 65%]
+tests/test_structural_scoring.py::test_matches_networkx[pairs0-0] PASSED [ 69%]
+tests/test_structural_scoring.py::test_matches_networkx[pairs1-1] PASSED [ 73%]
+tests/test_structural_scoring.py::test_matches_networkx[pairs2-4] PASSED [ 76%]
+tests/test_structural_scoring.py::test_matches_networkx[pairs3-4] PASSED [ 80%]
+tests/test_structural_scoring.py::test_matches_networkx[pairs4-5] PASSED [ 84%]
+tests/test_structural_scoring.py::test_matches_networkx[pairs5-3] PASSED [ 88%]
+tests/test_structural_scoring.py::test_star_analytical_center PASSED     [ 92%]
+tests/test_structural_scoring.py::test_batch_matches_individual_graphs_including_isolates PASSED [ 96%]
+tests/test_structural_scoring.py::test_invalid_edges_and_convergence PASSED [100%]
+
+============================== 26 passed in 2.52s ==============================

@@ -1,0 +1,6 @@
+# CPU-only workflow. PyTorch's installed Colab build is accepted.
+torch>=2.5.1,<3
+torch-geometric==2.6.1
+networkx==3.4.2
+scipy==1.14.1
+pytest==8.3.5

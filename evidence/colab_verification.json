@@ -1,0 +1,54 @@
+{
+  "provenance": "Summary of my completed Colab run. Full execution outputs are available in the linked notebook; this file contains the recorded environment, test summary, and final losses.",
+  "git_commit": "7a29a12375adf7622bb51ac687dfa56904456ae3",
+  "environment": {
+    "python": "3.13.18",
+    "pytorch": "2.14.1+cpu",
+    "pyg": "2.6.1",
+    "device": "cpu"
+  },
+  "tests": {
+    "passed": 26,
+    "warnings": 1,
+    "seconds": 9.39,
+    "warning": "torch.jit.script deprecation FutureWarning"
+  },
+  "runs": [
+    {
+      "seed": 0,
+      "mode": "random",
+      "final_train_sce": 0.16347236338690038,
+      "validation_random_mask_sce": 0.18044185075597496
+    },
+    {
+      "seed": 0,
+      "mode": "curriculum",
+      "final_train_sce": 0.15076006569025172,
+      "validation_random_mask_sce": 0.21813034554568606
+    },
+    {
+      "seed": 1,
+      "mode": "random",
+      "final_train_sce": 0.18144902527787304,
+      "validation_random_mask_sce": 0.19913649222245527
+    },
+    {
+      "seed": 1,
+      "mode": "curriculum",
+      "final_train_sce": 0.13117032605045625,
+      "validation_random_mask_sce": 0.21804885866103157
+    },
+    {
+      "seed": 2,
+      "mode": "random",
+      "final_train_sce": 0.16186939269759273,
+      "validation_random_mask_sce": 0.18250879622280783
+    },
+    {
+      "seed": 2,
+      "mode": "curriculum",
+      "final_train_sce": 0.1321808770753955,
+      "validation_random_mask_sce": 0.20100080777801596
+    }
+  ]
+}

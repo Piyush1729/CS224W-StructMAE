@@ -1,0 +1,1 @@
+Repeated all six CPU runs with identical seeds. All 180 epoch losses and six held-out losses match exactly. Runtime excluded.

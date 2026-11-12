@@ -1,0 +1,17 @@
+{
+  "environment": {
+    "python": "3.12.14",
+    "pytorch": "2.5.1+cpu",
+    "pyg": "2.6.1",
+    "git_commit": "af1efbe60b796db5f9fb6ecd46fe588433a12504",
+    "device": "cpu"
+  },
+  "dataset": "MUTAG"
+}
+{"seed": 0, "mode": "random", "final_train_sce": 0.1634723694383643, "validation_random_mask_sce": 0.18044185075597496, "training_seconds": 0.7285691639999641, "early_mask": {"masked_nodes": 1310, "pool_nodes": 0, "mean_masked_pagerank_percentile": 0.4907342376159006}, "late_mask": {"masked_nodes": 1310, "pool_nodes": 0, "mean_masked_pagerank_percentile": 0.4907342376159006}, "embedding_shape": [17, 64]}
+{"seed": 0, "mode": "curriculum", "final_train_sce": 0.15076006887523272, "validation_random_mask_sce": 0.21813033645736174, "training_seconds": 0.7849654059999693, "early_mask": {"masked_nodes": 1310, "pool_nodes": 0, "mean_masked_pagerank_percentile": 0.4907342376159006}, "late_mask": {"masked_nodes": 1310, "pool_nodes": 1393, "mean_masked_pagerank_percentile": 0.6367121255864169}, "embedding_shape": [17, 64]}
+{"seed": 1, "mode": "random", "final_train_sce": 0.1814490221497667, "validation_random_mask_sce": 0.19913649222245527, "training_seconds": 0.6966838390000021, "early_mask": {"masked_nodes": 1310, "pool_nodes": 0, "mean_masked_pagerank_percentile": 0.4979293090909833}, "late_mask": {"masked_nodes": 1310, "pool_nodes": 0, "mean_masked_pagerank_percentile": 0.4979293090909833}, "embedding_shape": [17, 64]}
+{"seed": 1, "mode": "curriculum", "final_train_sce": 0.13117032294509975, "validation_random_mask_sce": 0.21804885866103157, "training_seconds": 0.8302413239999851, "early_mask": {"masked_nodes": 1310, "pool_nodes": 0, "mean_masked_pagerank_percentile": 0.4979293090909833}, "late_mask": {"masked_nodes": 1310, "pool_nodes": 1393, "mean_masked_pagerank_percentile": 0.636124470092015}, "embedding_shape": [17, 64]}
+{"seed": 2, "mode": "random", "final_train_sce": 0.16186939571194978, "validation_random_mask_sce": 0.18250880918635673, "training_seconds": 0.70388156599995, "early_mask": {"masked_nodes": 1310, "pool_nodes": 0, "mean_masked_pagerank_percentile": 0.4996381677644512}, "late_mask": {"masked_nodes": 1310, "pool_nodes": 0, "mean_masked_pagerank_percentile": 0.4996381677644512}, "embedding_shape": [17, 64]}
+{"seed": 2, "mode": "curriculum", "final_train_sce": 0.13218087386766464, "validation_random_mask_sce": 0.20100080777801596, "training_seconds": 0.8139603119999492, "early_mask": {"masked_nodes": 1310, "pool_nodes": 0, "mean_masked_pagerank_percentile": 0.4996381677644512}, "late_mask": {"masked_nodes": 1310, "pool_nodes": 1393, "mean_masked_pagerank_percentile": 0.62969823620275}, "embedding_shape": [17, 64]}
+Saved outputs/metrics.json
